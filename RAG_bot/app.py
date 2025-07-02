@@ -5,6 +5,7 @@ from google.api_core.exceptions import GoogleAPICallError, RetryError, ServiceUn
 import google.generativeai as genai
 from llama_index.llms.gemini import Gemini
 from llama_index.embeddings.gemini import GeminiEmbedding
+from src.helper import voice_input, llm_model_object, text_to_speech
 
 # Initialize the conversation history
 if "conversation" not in st.session_state:
@@ -78,9 +79,25 @@ def main():
     if st.session_state.conversation:
         st.write("### Conversation History")
         for chat in st.session_state.conversation:
-            st.write(f"**👤:** {chat['question']}")
-            st.write(f"**🤖:** {chat['response']}")
+            st.write(f"👤:** {chat['question']}")
+            st.write(f"🤖:** {chat['response']}")
             st.write("---")
+    
+    if st.button("🎙️"):
+        with st.spinner("Listening..."):
+            text = voice_input()
+            response = llm_model_object(text)
+            text_to_speech(response)
+            
+            audio_file = open("speech.mp3", "rb")
+            audio_bytes = audio_file.read()
+            
+            st.text_area(label="Response:", value=response, height=350)
+            st.audio(audio_bytes)
+            st.download_button(label="Download Speech",
+                               data=audio_bytes,
+                               file_name="speech.mp3",
+                               mime="audio/mp3")
 
     if "query_engine" in st.session_state:
         user_question = st.text_input("Ask your question", key="user_question_input")
@@ -98,4 +115,4 @@ def main():
                         st.error(f"An error occurred: {str(e)}")
 
 if __name__ == "__main__":
-    main()
+    main() 
